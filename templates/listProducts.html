@@ -1,0 +1,190 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="block-header">
+        {% comment %} <h2>
+            商品管理
+            <small>Taken from <a href="https://datatables.net/" target="_blank">datatables.net</a></small>
+        </h2> {% endcomment %}
+    </div>
+    <!-- Basic Examples -->
+    <div class="row clearfix">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <div class="card">
+                <div class="header">
+                    <h2>
+                        商品管理
+                    </h2>
+                    <div class="text-center">
+                        <button type="button" data-dismiss="modal" class="btn btn-primary" id="new">New</button>
+                    </div>
+                    {% comment %} <ul class="header-dropdown m-r--5">
+                        <li class="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                <i class="material-icons">more_vert</i>
+                            </a>
+                            <ul class="dropdown-menu pull-right">
+                                <li><a href="javascript:void(0);">Action</a></li>
+                                <li><a href="javascript:void(0);">Another action</a></li>
+                                <li><a href="javascript:void(0);">Something else here</a></li>
+                            </ul>
+                        </li>
+                    </ul> {% endcomment %}
+                </div>
+                <div class="body">
+                    <div class="table-responsive">
+                            <table id="listProductTable" class="table table-bordered table-striped table-hover js-basic-example"
+                            data-toggle="table"
+                            data-url="http://localhost:8000/api/gbl/product/"
+                            data-method="get"
+                            data-pagination="true"
+                            data-side-pagination="server"
+                            data-page-list="[10, 20, 50, 100, 200]"
+                            data-search="true" data-mobile-responsive="true" searchOnEnterKey="true"
+                            data-show-refresh="true" data-show-columns="true"
+                            data-show-toggle="true" data-page-size=20 data-unique-id="product_id"
+                            data-striped="true"
+                            >
+                            <thead>
+                                <tr>
+                                    <th data-field="product_id">編號</th>
+                                    <th data-field="product_name">名稱</th>
+                                    <th data-field="product_category">類別</th>
+                                    <th data-field="product_price">單價</th>
+                                    <th data-field="product_description">描述</th>
+                                    {% comment %} <th data-field="product_name">動作</th> {% endcomment %}
+                                </tr>
+                            </thead>
+                            {% comment %} <tfoot>
+                                <tr>
+                                    <th>編號</th>
+                                    <th>名稱</th>
+                                    <th>類別</th>
+                                    <th>單價</th>
+                                    <th>描述</th>
+                                    <th>動作</th>
+                                </tr>
+                            </tfoot> {% endcomment %}
+                            <!--
+                            <tbody>
+                                {% for product in products %}
+                                <tr>
+                                    <td>{{ product.product_id }}</td>
+                                    <td>{{ product.product_name }}</td>
+                                    <td>{{ product.product_category.product_category_name }}</td>
+                                    <td>{{ product.product_price }}</td>
+                                    <td>{{ product.product_description }}</td>
+                                </tr>
+                                {% endfor %}                           
+                            </tbody>
+                            -->
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal_title"></h4>
+                </div>
+                <div class="modal-body">
+                    <form role="form">
+                        <div class="form-group">
+                            <label for="product_id"><span class="glyphicon glyphicon-pencil"></span> 商品名稱</label>
+                            <input type="text" class="form-control" id="product_id" name="product_id" placeholder="輸入商品編號"
+                                required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="product_name"><span class="glyphicon glyphicon-pencil"></span> 商品名稱</label>
+                            <input type="text" class="form-control" id="product_name" name="product_name" placeholder="輸入商品名稱"
+                                   required="true">
+                        </div>
+                        <div class="form-group">
+                                <label for="product_category"><span class="glyphicon glyphicon-file"></span> 商品類別</label>
+                                <select class="form-control" id="product_category" name="product_category">
+                                    {% comment %} {% for product_category in product_categories %}
+                                        <option value="{{product_category.product_category_id}}">
+                                            {{product_category.product_category_name}}
+                                        </option>
+                                    {% endfor %} {% endcomment %}
+                                    <option>1</option>
+                                    <option>2</option>
+                                </select>
+                        </div>                        
+                            <!--
+                                {% if org == current_org %}selected="selected"{% endif %}
+                            -->
+                        {% comment %} <div class="form-group">
+                            <label for="product_category"><span class="glyphicon glyphicon-file"></span> 商品類別</label>
+                            <input type="text" class="form-control" id="product_category" name="product_category"
+                                   placeholder="輸入商品名稱" required="true">
+                        </div> {% endcomment %}
+                        <div class="form-group">
+                            <label for="product_price"><span class="glyphicon glyphicon-file"></span> 商品價格</label>
+                            <input type="text" class="form-control" id="product_price" name="product_price"
+                                   placeholder="輸入商品價格" required="true">
+                        </div>
+                        <div class="form-group">
+                            <label for="product_description"><span class="glyphicon glyphicon-file"></span> 商品描述</label>
+                            <input type="text" class="form-control" id="product_description" name="product_description"
+                                   placeholder="輸入商品描述" required="true">
+                        </div>
+                        <input type="hidden" id="type" name="type" value="">
+                        <button type="submit" class="btn btn-success btn-block"><span
+                                class="glyphicon glyphicon-ok"></span> OK
+                        </button>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <!--<button type="button" class="btn btn-link waves-effect">SAVE CHANGES</button>-->
+                    <button type="button" class="btn btn-link waves-effect" data-dismiss="modal">CLOSE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Modal -->
+    <div class="modal fade" id="confirm" role="dialog">
+        <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Are you sure?</h4>
+                    </div>
+                    <div class="modal-body">
+                        <button type="button" data-dismiss="modal" class="btn btn-primary" id="delete">Delete</button>
+                        <button type="button" data-dismiss="modal" class="btn">Cancel</button>
+                    </div>
+                </div>
+        </div>
+    </div>
+
+    {% load staticfiles %}
+    <!-- Jquery DataTable Plugin Js -->
+    <script src={% static "plugins/jquery-datatable/jquery.dataTables.js" %}></script>
+    <script src={% static "plugins/jquery-datatable/skin/bootstrap/js/dataTables.bootstrap.js" %}></script>
+    <script src={% static "plugins/jquery-datatable/extensions/export/dataTables.buttons.min.js" %}></script>
+    <script src={% static "plugins/jquery-datatable/extensions/export/buttons.flash.min.js" %}></script>
+    <script src={% static "plugins/jquery-datatable/extensions/export/jszip.min.js" %}></script>
+    <script src={% static "plugins/jquery-datatable/extensions/export/pdfmake.min.js" %}></script>
+    <script src={% static "plugins/jquery-datatable/extensions/export/vfs_fonts.js" %}></script>
+    <script src={% static "plugins/jquery-datatable/extensions/export/buttons.html5.min.js" %}></script>
+    <script src={% static "plugins/jquery-datatable/extensions/export/buttons.print.min.js" %}></script>
+    <!-- Custom Js -->
+    <script src={% static "js/admin.js" %}></script>
+    <script src={% static "js/pages/tables/jquery-datatable.js" %}></script>
+    <script src={% static "js/listProductsDataTable.js" %}></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.css">
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/bootstrap-table.min.js"></script>
+
+    <!-- Latest compiled and minified Locales -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-table/1.12.1/locale/bootstrap-table-zh-CN.min.js"></script>
+    {% comment %} <script src={% static "js/pages/ui/modals.js" %}></script> {% endcomment %}
+    
+{% endblock content %}

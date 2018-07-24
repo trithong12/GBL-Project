@@ -1,0 +1,56 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="block-header">
+        <h2>登入頁面</h2>
+    </div>
+
+    <!-- Vertical Layout -->
+    <div class="row clearfix">
+        <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
+            <div class="card">
+                <div class="header">
+                    <h2>
+                        管理者登入
+                    </h2>
+                    <!--
+                    <ul class="header-dropdown m-r--5">
+                        <li class="dropdown">
+                            <a href="javascript:void(0);" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                                <i class="material-icons">more_vert</i>
+                            </a>
+                            <ul class="dropdown-menu pull-right">
+                                <li><a href="javascript:void(0);">Action</a></li>
+                                <li><a href="javascript:void(0);">Another action</a></li>
+                                <li><a href="javascript:void(0);">Something else here</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                    -->
+                </div>
+                <div class="body">
+                    <form action="" method="POST">
+                        {% csrf_token %}
+                        <label for="username">使用者名稱</label>
+                        <div class="form-group">
+                            <div class="form-line">
+                                <input type="text" name="username" id="username" class="form-control" placeholder="請輸入使用者名稱">
+                            </div>
+                        </div>
+                        <label for="password">密碼</label>
+                        <div class="form-group">
+                            <div class="form-line">
+                                <input type="password" name="password" id="password" class="form-control" placeholder="請輸入密碼">
+                            </div>
+                        </div>
+
+                        <input type="checkbox" id="remember_me" class="filled-in">
+                        <label for="remember_me">記住我</label>
+                        <br>
+                        <button type="submit" class="btn btn-primary m-t-15 waves-effect">登入</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
