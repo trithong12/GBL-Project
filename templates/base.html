@@ -825,9 +825,9 @@
         <!-- #END# Right Sidebar -->
     </section>
 
-    <section class="content">
-        <div class="container-fluid">
-            {% block content %} {% endblock %}
+    {% block content %} {% endblock %}
+    {% comment %} <section class="content">
+        <div class="container-fluid"> {% endcomment %}
             <!--
             <div class="block-header">
                 <h2>DASHBOARD</h2>
@@ -1150,10 +1150,10 @@
                 -->
                 <!-- #END# Browser Usage -->
             <!--</div>-->
-        </div>
-    </section>
+        {% comment %} </div>
+    </section> {% endcomment %}
 
-    <!-- Jquery Core Js -->
+    {% comment %} <!-- Jquery Core Js -->
     <script src={% static "plugins/jquery/jquery.min.js" %}></script>
 
     <!-- Bootstrap Core Js -->
@@ -1208,7 +1208,7 @@
 
     <!-- Custom Js -->
     <script src={% static "js/admin.js" %}></script>
-    <script src={% static "js/pages/tables/jquery-datatable.js" %}></script>
+    <script src={% static "js/pages/tables/jquery-datatable.js" %}></script> {% endcomment %}
 </body>
 
 </html>

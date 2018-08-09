@@ -14,10 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-#from django.urls import path
+from django.urls import path
 from django.conf.urls import url, include
 from myapp import views
 from rest_framework.routers import DefaultRouter
+from django.conf.urls.static import static
+from django.conf import settings
 
 router = DefaultRouter()
 router.register(r'product', views.ProductViewSet)
@@ -43,4 +45,6 @@ urlpatterns = [
 #    url(r'^listProducts/$', views.listProducts),     
 #    url(r'^listProducts_ajax_url/$', views.listProducts_asJson, name='listProducts_ajax_url'),
     url(r'^api/gbl/', include(router.urls)),
-]
+    
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -93,3 +93,4 @@ class MemberViewSet(viewsets.ModelViewSet):
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = models.Message.objects.all()
     serializer_class = MessageSerializer
+

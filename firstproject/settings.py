@@ -39,7 +39,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'myapp',
+    'ckeditor',
+    'ckeditor_uploader',
 ]
+
+CKEDITOR_UPLOAD_PATH = 'uploads/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -125,6 +129,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 
 STATIC_URL = '/static/'
+STATIC_ROOT = 'static/'
 STATIC_DIRS = {
         os.path.join(BASE_DIR, 'static')
 }
@@ -133,3 +138,6 @@ print(STATIC_DIRS)
 print(STATIC_URL)
 
 DATETIME_FORMAT = '%Y/%m/%d %X'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = 'media/'

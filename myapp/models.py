@@ -8,6 +8,9 @@
 from django.db import models
 from model_utils import Choices
 
+from ckeditor.fields import RichTextField
+from ckeditor_uploader.fields import RichTextUploadingField
+
 class Album(models.Model):
     album_id = models.AutoField(primary_key=True)
     album_name = models.CharField(max_length=50)
@@ -270,15 +273,24 @@ class PaymentMethod(models.Model):
 
 class Post(models.Model):
     post_id = models.AutoField(primary_key=True)
-    post_title = models.CharField(max_length=50)
-    post_author = models.CharField(max_length=45)
-    post_content = models.CharField(max_length=10000, blank=True, null=True)
-    post_created_datetime = models.DateTimeField()
-    post_last_modified_datetime = models.DateTimeField()
-    post_category = models.ForeignKey('PostCategory', models.DO_NOTHING)
+    post_title = models.CharField(max_length=50, verbose_name='文章標題')
+    post_author = models.CharField(max_length=45, verbose_name='文章作者')
+    #post_content = models.CharField(max_length=10000, blank=True, null=True)
+    #post_content = RichTextField(max_length=10000, blank=True, null=True)
+    post_content = RichTextUploadingField(max_length=10000, blank=True, null=True, verbose_name='文章內容')
+    #post_created_datetime = models.DateTimeField()
+    post_last_modified_datetime = models.DateTimeField(verbose_name='最近更動時間')
+    post_category = models.ForeignKey('PostCategory', models.DO_NOTHING, verbose_name='文章分類')
     post_is_deleted = models.TextField()  # This field type is a guess.
-    post_is_public = models.TextField()  # This field type is a guess.
-
+    post_is_public = models.BooleanField(verbose_name='發佈文章')  # This field type is a guess.
+    
+    def _post_is_public(self):
+        if bool(self.post_is_public):
+            return '已發佈'
+        else:
+            return '未發佈'
+    _post_is_public.short_description = '發佈文章'
+    
     class Meta:
         managed = False
         db_table = 'post'
@@ -306,8 +318,11 @@ class PostAttachmentType(models.Model):
 
 class PostCategory(models.Model):
     post_category_id = models.AutoField(primary_key=True)
-    posts_category_name = models.CharField(max_length=50)
+    post_category_name = models.CharField(max_length=50)
 
+    def __str__(self):
+        return self.post_category_name
+    
     class Meta:
         managed = False
         db_table = 'post_category'
