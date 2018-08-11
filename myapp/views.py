@@ -10,7 +10,7 @@ from django.core import serializers
 from rest_framework import viewsets, status, generics, permissions, serializers
 from rest_framework.response import Response
 from myapp.serializers import *
-from myapp.models import query_products_by_args
+#from myapp.models import query_products_by_args
 
 from django.contrib import admin
 admin.autodiscover()

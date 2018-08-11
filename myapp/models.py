@@ -249,6 +249,9 @@ class Member(models.Model):
     member_introducer_name = models.CharField(max_length=20, blank=True, null=True, verbose_name='介紹人')
     member_is_verified = models.BooleanField(verbose_name='已驗證')  # This field type is a guess.
 
+    def __str__(self):
+        return self.member_name
+    
     class Meta:
         managed = False
         db_table = 'member'
@@ -350,39 +353,47 @@ class Oauth2ProviderRefreshtoken(models.Model):
         unique_together = (('token', 'revoked'),)
 
 class Order(models.Model):
-    order_id = models.CharField(primary_key=True, max_length=45)
-    member = models.ForeignKey(Member, models.DO_NOTHING)
-    order_cost_balance = models.FloatField()
-    order_payment_method = models.ForeignKey('PaymentMethod', models.DO_NOTHING, null=True)
-    order_payment_is_completed = models.TextField()  # This field type is a guess.
-    order_receive_method = models.ForeignKey('ReceiveMethod', models.DO_NOTHING, blank=True, null=True)
-    order_delivery_address = models.CharField(max_length=100, blank=True, null=True)
-    order_process = models.ForeignKey('OrderProcess', models.DO_NOTHING, blank=True)
-    order_create_datetime = models.DateTimeField()
-    order_last_modified_datetime = models.DateTimeField(blank=True, null=True)
-    order_deleted_datetime = models.DateTimeField(blank=True, null=True)
-    order_is_deleted = models.TextField()  # This field type is a guess.
+    order_id = models.CharField(primary_key=True, max_length=45, verbose_name='訂單編號')
+    member = models.ForeignKey(Member, models.DO_NOTHING, verbose_name='購買者')
+    order_cost_balance = models.IntegerField(verbose_name='訂單總額')
+    order_payment_method = models.ForeignKey('PaymentMethod', models.DO_NOTHING, null=True, verbose_name='付款方式')
+    order_payment_is_completed = models.BooleanField(verbose_name='已付款')  # This field type is a guess.
+    order_receive_method = models.ForeignKey('ReceiveMethod', models.DO_NOTHING, blank=True, null=True, verbose_name='收貨方式')
+    order_delivery_address = models.CharField(max_length=100, blank=True, null=True, verbose_name='收貨地點')
+    order_process = models.ForeignKey('OrderProcess', models.DO_NOTHING, blank=True, verbose_name='訂單狀態')
+    order_create_datetime = models.DateTimeField(auto_now_add=True, verbose_name='訂單建立時間')
+    order_modified_datetime = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name='最近修改時間')
+    order_is_cancelled = models.BooleanField(default=False, verbose_name='訂單已被取消')
+    order_cancelled_datetime = models.DateTimeField(blank=True, null=True, verbose_name='訂單取消時間')
+#    order_is_deleted = models.TextField()  # This field type is a guess.
 
     class Meta:
         managed = False
         db_table = 'order'
+        verbose_name = '訂單'
+        verbose_name_plural = '訂單'
 
 
 class OrderCart(models.Model):
     order_cart_id = models.AutoField(primary_key=True)
-    order = models.ForeignKey(Order, models.DO_NOTHING, related_name='order_cart')
-    product = models.ForeignKey('Product', models.DO_NOTHING)
-    amount = models.IntegerField()
+    order = models.ForeignKey(Order, models.CASCADE, related_name='order_cart', verbose_name='訂單編號')
+    product = models.ForeignKey('Product', models.DO_NOTHING, verbose_name='商品名稱')
+    amount = models.IntegerField(verbose_name='數量')
 
     class Meta:
         managed = False
         db_table = 'order_cart'
+        verbose_name = '購買項目'
+        verbose_name_plural = '購買項目'
 
 
 class OrderProcess(models.Model):
     order_process_id = models.AutoField(primary_key=True)
     order_process_name = models.CharField(max_length=45)
 
+    def __str__(self):
+        return self.order_process_name
+    
     class Meta:
         managed = False
         db_table = 'order_process'
@@ -392,6 +403,9 @@ class PaymentMethod(models.Model):
     payment_method_id = models.AutoField(primary_key=True)
     payment_method_name = models.CharField(max_length=45)
 
+    def __str__(self):
+        return self.payment_method_name
+    
     class Meta:
         managed = False
         db_table = 'payment_method'
@@ -456,21 +470,31 @@ class PostCategory(models.Model):
 
 
 class Product(models.Model):
-    product_id = models.CharField(primary_key=True, max_length=45)
-    product_name = models.CharField(max_length=50)
-    product_category = models.ForeignKey('ProductCategory', models.DO_NOTHING)
-    product_price = models.FloatField(blank=True, null=True)
-    product_description = models.CharField(max_length=200, blank=True, null=True)
-    product_is_deleted = models.TextField()  # This field type is a guess.
+    product_id = models.CharField(primary_key=True, max_length=45, verbose_name='商品代號')
+    product_name = models.CharField(max_length=50, verbose_name='名稱')
+    product_category = models.ForeignKey('ProductCategory', models.DO_NOTHING, verbose_name='商品分類')
+    product_price = models.IntegerField(blank=True, null=True, verbose_name='單價/價格')
+    product_description = models.CharField(max_length=200, blank=True, null=True, verbose_name='描述')
+    product_created_datetime = models.DateTimeField(auto_now_add=True, verbose_name='建立日期')
+    product_modified_datetime = models.DateTimeField(auto_now_add=True, verbose_name='最近修改日期')
+#    product_is_deleted = models.TextField()  # This field type is a guess.
 
+    def __str__(self):
+        return self.product_name
+    
     class Meta:
         managed = False
         db_table = 'product'
+        verbose_name = '商品'
+        verbose_name_plural = '商品'
 
 
 class ProductCategory(models.Model):
     product_category_id = models.AutoField(primary_key=True)
     product_category_name = models.CharField(max_length=50)
+
+    def __str__(self):
+        return self.product_category_name
 
     class Meta:
         managed = False
@@ -481,46 +505,9 @@ class ReceiveMethod(models.Model):
     receive_method_id = models.AutoField(primary_key=True)
     receive_method_name = models.CharField(max_length=45)
 
+    def __str__(self):
+        return self.receive_method_name
+    
     class Meta:
         managed = False
         db_table = 'receive_method'
-
-ORDER_COLUMN_CHOICES = Choices(
-        ('0', 'product_id'),
-        ('1', 'product_name'),
-        ('2', 'product_category'),
-        ('3', 'product_price'),
-        ('4', 'product_description'),
-)
-
-def query_products_by_args(**kwargs):
-    draw = int(kwargs.get('draw', None)[0])
-    length = int(kwargs.get('length', None)[0])
-    start = int(kwargs.get('start', None)[0])
-    search_value = kwargs.get('search[value]', None)[0]
-    order_column = kwargs.get('order[0][column]', None)[0]
-    order = kwargs.get('order[0][dir]', None)[0]
-
-    order_column = ORDER_COLUMN_CHOICES[order_column]
-    # django orm '-' -> desc
-    if order == 'desc':
-        order_column = '-' + order_column
-
-    queryset = Product.objects.all()
-    total = queryset.count()
-
-    if search_value:
-        queryset = queryset.filter(Q(product_id__icontains=search_value) |
-                                        Q(product_name__icontains=search_value) |
-                                        Q(product_category__icontains=search_value) |
-                                        Q(product_price__icontains=search_value) |
-                                        Q(product_description__icontains=search_value))
-
-    count = queryset.count()
-    queryset = queryset.order_by(order_column)[start:start + length]
-    return {
-        'items': queryset,
-        'count': count,
-        'total': total,
-        'draw': draw
-    }

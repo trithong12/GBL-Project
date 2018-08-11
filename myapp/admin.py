@@ -21,10 +21,6 @@ class PostForm(forms.ModelForm):
         model = models.Post
         fields = ['post_title', 'post_author', 'post_content', 'post_category', 'post_is_public']
 
-class PostCategoryChoiceField(forms.ModelChoiceField):
-     def label_from_instance(self, obj):
-         return obj.post_category_name
-
 class PostAdmin(admin.ModelAdmin):
     
     def make_published(modeladmin, request, queryset):
@@ -34,12 +30,7 @@ class PostAdmin(admin.ModelAdmin):
     def make_unpublished(modeladmin, request, queryset):
         queryset.update(post_is_public=False)
     make_unpublished.short_description = "不發佈所選取之文章"
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'post_category':
-            return PostCategoryChoiceField(queryset=models.PostCategory.objects.all(), label='文章分類')
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-    
+   
     form = PostForm
     list_display = ('post_title', 'post_author', 'post_content', 'post_category', 'post_last_modified_datetime', '_post_is_public')
     list_filter = ('post_title', 'post_author', 'post_last_modified_datetime', 'post_is_public')
@@ -86,10 +77,6 @@ from PIL import Image
 
 from myapp.models import Album, AlbumImage
 
-class AlbumCategoryChoiceField(forms.ModelChoiceField):
-     def label_from_instance(self, obj):
-         return obj.album_category_name
-
 class AlbumForm(forms.ModelForm):
     class Meta:
         model = Album
@@ -97,13 +84,7 @@ class AlbumForm(forms.ModelForm):
 
     zip = forms.FileField(required=False, label='相簿照片集(.zip檔)')
 
-class AlbumModelAdmin(admin.ModelAdmin):
-    
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'album_category':
-            return AlbumCategoryChoiceField(queryset=models.AlbumCategory.objects.all(), label='相簿分類')
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-    
+class AlbumModelAdmin(admin.ModelAdmin):  
     form = AlbumForm
     prepopulated_fields = {'slug': ('title',)}
     list_display = ('title', 'album_category', 'thumb', 'modified',)
@@ -169,16 +150,7 @@ class MemberModelAdmin(admin.ModelAdmin):
 
 
 # 活動管理 ===========================================================================
-class EventCategoryChoiceField(forms.ModelChoiceField):
-     def label_from_instance(self, obj):
-         return obj.event_category_name
-
 class EventModelAdmin(admin.ModelAdmin):
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == 'event_category':
-            return EventCategoryChoiceField(queryset=models.EventCategory.objects.all(), label='活動分類')
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
-    
     fs = [f.name for f in models.Event._meta.fields]
     fs.remove('event_id')
     list_display = fs
@@ -188,11 +160,85 @@ class EventModelAdmin(admin.ModelAdmin):
     ordering = ('event_id',)
     
 # end活動管理 ========================================================================
+
+
+# 商品管理 ===========================================================================
+class ProductForm(forms.ModelForm):
+    class Meta:
+        model = models.Product
+        exclude = ['product_created_datetime', 'product_modified_datetime',]
+
+class ProductModelAdmin(admin.ModelAdmin):   
+    form = ProductForm
+    fs = [f.name for f in models.Product._meta.fields]
+    list_display = fs
+    list_filter = ('product_category', 'product_price', 'product_name', 'product_created_datetime', 'product_modified_datetime')
+    search_fields = ('product_id', 'product_category', 'product_price', 'product_name', 'product_description')
+    list_per_page = 10
+    ordering = ('product_id',)
     
+    def save_model(self, request, obj, form, change):
+        if form.is_valid():
+            product = form.save(commit=False)
+            product.product_modified_datetime = datetime.now()
+            product.save()
+    
+# end商品管理 ========================================================================
+
+
+# 訂單管理 ===========================================================================
+class OrderForm(forms.ModelForm):
+    class Meta:
+        model = models.Order
+        exclude = ['order_cost_balance', 'order_created_datetime', 'order_modified_datetime', 'order_cancelled_datetime', 'order_is_cancelled']
+
+class OrderCartInline(admin.TabularInline):
+    model = models.OrderCart
+
+class OrderModelAdmin(admin.ModelAdmin):
+    inlines = [OrderCartInline]
+    form = OrderForm
+    fs = [f.name for f in models.Order._meta.fields]
+    list_display = fs
+    list_filter = ('order_payment_method', 'order_payment_is_completed', 'order_receive_method', 'order_process', 'order_modified_datetime',)
+    search_fields = ('order_id', 'member', 'order_delivery_address',)
+    list_per_page = 10
+    ordering = ('order_id',)
+    
+    def response_add(self, request, new_object):
+        obj = self.after_saving_model_and_related_inlines(new_object)
+        return super(OrderModelAdmin, self).response_add(request, obj)
+
+    def response_change(self, request, obj):
+        obj = self.after_saving_model_and_related_inlines(obj)
+        return super(OrderModelAdmin, self).response_change(request, obj)
+
+    def after_saving_model_and_related_inlines(self, obj):
+        print(obj.order_cart.all().count())
+        total = 0
+        for item in obj.order_cart.all():
+            total += item.product.product_price * item.amount
+        obj.order_cost_balance = total
+        obj.save()
+        return obj
+    
+    def save_model(self, request, obj, form, change):
+        if not obj.order_is_cancelled and obj.order_process.order_process_id == 5:
+            obj.order_cancelled_datetime = datetime.now()
+            obj.order_is_cancelled = True
+        if obj.order_is_cancelled and obj.order_process.order_process_id != 5:
+            obj.order_cancelled_datetime = None
+            obj.order_is_cancelled = False
+        obj.save()
+    
+# end訂單管理 ========================================================================
+            
 admin.site.register(models.Post, PostAdmin)
 admin.site.register(models.Album, AlbumModelAdmin)
 admin.site.register(models.AlbumImage, AlbumImageModelAdmin)
 admin.site.register(models.Member, MemberModelAdmin)
 admin.site.register(models.Event, EventModelAdmin)
+admin.site.register(models.Product, ProductModelAdmin)
+admin.site.register(models.Order, OrderModelAdmin)
 admin.site.site_header = '佳倍利後台管理'
 admin.site.index_title = '後台管理' 
