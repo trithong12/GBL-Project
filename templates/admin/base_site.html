@@ -1,0 +1,47 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | 佳貝利後台管理 {% endblock %}
+
+{% block extrastyle %}
+    <style>
+        #header {
+            background-color:#3791da;
+            color:gold;
+        }
+        .module h2, .module caption, .inline-group h2 {
+            background:goldenrod;
+        }
+        {% comment %} // table thead th 背景顏色和字體樣式 {% endcomment %}
+        thead th a:link, thead th a:visited {
+            color:#ffffff;
+            font-weight: bold;
+            font-size:medium;
+        }
+        {% comment %} // table thead th 背景顏色和字體樣式 {% endcomment %}
+        thead th {
+            color:#ffffff;
+            background:gray;
+            font-size:medium;
+        }
+        div.breadcrumbs {
+            background:#bade73;
+            color:#d07d64;
+            font-weight:bold;
+        }
+        div.breadcrumbs a {
+            font-weight:bold;
+        }
+        {% comment %} // 標頭"佳倍利"的樣式 {% endcomment %}
+        #branding h1, #branding h1 a:link, #branding h1 a:visited {
+            color:gold;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

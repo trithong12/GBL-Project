@@ -7,10 +7,15 @@ from myapp import models
 from django.conf import settings
 from django.contrib import auth
 from django.core import serializers
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, generics, permissions, serializers
 from rest_framework.response import Response
 from myapp.serializers import *
 from myapp.models import query_products_by_args
+
+from django.contrib import admin
+admin.autodiscover()
+
+from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, TokenHasScope
 
 from django.contrib.auth.decorators import login_required
 
@@ -54,18 +59,22 @@ def index(request):
 #    return HttpResponse(json, content_type='application/json')
 
 class PostViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Post.objects.all()
     serializer_class = PostSerializer
 
 class EventViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Event.objects.all()
     serializer_class = EventSerializer
 
 class AlbumViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Album.objects.all()
     serializer_class = AlbumSerializer
 
 class ProductViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Product.objects.all()
     serializer_class = ProductSerializer
 #    def list(self, request, **kwargs):
@@ -83,14 +92,16 @@ class ProductViewSet(viewsets.ModelViewSet):
 #            return Response(e, status=status.HTTP_404_NOT_FOUND, template_name=None, content_type=None)
 
 class OrderViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Order.objects.all()
     serializer_class = OrderSerializer
 
 class MemberViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Member.objects.all()
     serializer_class = MemberSerializer
 
 class MessageViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Message.objects.all()
     serializer_class = MessageSerializer
-

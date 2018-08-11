@@ -3,18 +3,19 @@ from rest_framework import serializers
 from myapp import models
 
 class PostAttachmentSerializer(serializers.ModelSerializer):
-    post_attachment_type = serializers.CharField(source='post_attachment_type.post_attachment_type_name')
+    #post_attachment_type = serializers.CharField(source='post_attachment_type.post_attachment_type_name')
     class Meta:
         model = models.PostAttachment
 #        fields = '__all__'
-        fields = ('post_attachment_id', 'post_attachment_path_or_link', 'post_attachment_type')
+        fields = ('post_attachment_path_or_link',)
 
 class PostSerializer(serializers.ModelSerializer):
     post_attachment = PostAttachmentSerializer(many=True)
+    post_category = serializers.CharField(source='post_category.post_category_name')
     class Meta:
         model = models.Post
-        fields = '__all__'
-#        fields = ('post_id', 'post_attachment')
+#        fields = '__all__'
+        fields = ('post_title', 'post_last_modified_datetime', 'post_category', 'post_attachment')
 
 class EventSerializer(serializers.ModelSerializer):
     event_category = serializers.CharField(source='event_category.event_category_name')
@@ -24,18 +25,18 @@ class EventSerializer(serializers.ModelSerializer):
         model = models.Event
         fields = '__all__'
 
-class AlbumPhotosSerializer(serializers.ModelSerializer):
+class AlbumImageSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.AlbumPhotos
+        model = models.AlbumImage
         fields = '__all__'
 
 class AlbumSerializer(serializers.ModelSerializer):
     album_category = serializers.CharField(source='album_category.album_category_name')
     album_event_datetime = serializers.DateTimeField(format=settings.DATETIME_FORMAT)
-    photos = AlbumPhotosSerializer(many=True)
+    images = AlbumImageSerializer(many=True)
     class Meta:
         model = models.Album
-        fields = '__all__'
+        fields = ('title', 'album_category', 'album_event_datetime', 'images')
 
 class ProductSerializer(serializers.ModelSerializer):
 #    product_category = serializers.PrimaryKeyRelatedField(queryset=models.ProductCategory.objects.all())
@@ -66,13 +67,13 @@ class OrderSerializer(serializers.ModelSerializer):
         model = models.Order
         fields = '__all__'
 
-class MemberIntroducerReferenceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.MemberIntroducerReference
-        fields = '__all__'
+#class MemberIntroducerReferenceSerializer(serializers.ModelSerializer):
+#    class Meta:
+#        model = models.MemberIntroducerReference
+#        fields = '__all__'
 
 class MemberSerializer(serializers.ModelSerializer):
-    member_introducer_reference = serializers.CharField(source='member_introducer_reference.introducer')
+#    member_introducer_reference = serializers.CharField(source='member_introducer_reference.introducer')
     class Meta:
         model = models.Member
         fields = '__all__'

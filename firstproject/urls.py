@@ -32,7 +32,7 @@ router.register(r'message', views.MessageViewSet)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    
+    path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     # 帳號登入登出
     url(r'^login/$', views.login),
     url(r'^logout/$', views.logout),

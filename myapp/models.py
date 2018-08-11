@@ -11,34 +11,76 @@ from model_utils import Choices
 from ckeditor.fields import RichTextField
 from ckeditor_uploader.fields import RichTextUploadingField
 
+import uuid
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFit
+
 class Album(models.Model):
     album_id = models.AutoField(primary_key=True)
-    album_name = models.CharField(max_length=50)
-    album_category = models.ForeignKey('AlbumCategory', models.DO_NOTHING)
-    album_event_datetime = models.DateTimeField(blank=True, null=True)
+    title = models.CharField(max_length=70, verbose_name='相簿名稱/標題')
+    album_category = models.ForeignKey('AlbumCategory', models.DO_NOTHING, verbose_name='相簿分類')
+    album_event_datetime = models.DateTimeField(blank=True, null=True, verbose_name='活動日期')
+    description = models.TextField(max_length=1024, blank=True, null=True, verbose_name='相簿描述')
+    thumb = ProcessedImageField(upload_to='albums', processors=[ResizeToFit(300)], format='JPEG', options={'quality': 90}, blank=True, null=True, verbose_name='縮略圖')
+    tags = models.CharField(max_length=250, blank=True, null=True, verbose_name='標籤')
+    is_visible = models.BooleanField(default=True, verbose_name='可檢視')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='建立日期')
+    modified = models.DateTimeField(auto_now_add=True, verbose_name='最近修改日期')
+    slug = models.SlugField(max_length=50, unique=True)    
+
+    #def get_absolute_url(self):
+    #    return reverse('album', kwargs={'slug':self.slug})
 
     class Meta:
         managed = False
         db_table = 'album'
+        verbose_name = '相簿'
+        verbose_name_plural = '相簿'
+        
+    def __str__(self):
+        return self.title
+
+class AlbumImage(models.Model):
+    image_id = models.AutoField(primary_key=True)
+    image = ProcessedImageField(upload_to='albums', processors=[ResizeToFit(1280)], format='JPEG', options={'quality': 70}, verbose_name='照片檔案')
+    thumb = ProcessedImageField(upload_to='albums', processors=[ResizeToFit(300)], format='JPEG', options={'quality': 80}, verbose_name='縮略圖')
+    album = models.ForeignKey('album', related_name='images', on_delete=models.PROTECT, verbose_name='所屬相簿')
+    alt = models.CharField(max_length=255, default=uuid.uuid4, verbose_name='圖片名稱/描述')
+    created = models.DateTimeField(auto_now_add=True, verbose_name='建立日期')
+    width = models.IntegerField(default=0, verbose_name='寬度')
+    height = models.IntegerField(default=0, verbose_name='高度')
+    slug = models.SlugField(max_length=70, default=uuid.uuid4, editable=False)
+    
+    def __str__(self):
+        return self.album + '--' + self.alt
+    
+    class Meta:
+        managed = False
+        db_table = 'album_image'
+        verbose_name = '相簿照片'
+        verbose_name_plural = '相簿照片'
+
+#class Album(models.Model):
+#    album_id = models.AutoField(primary_key=True)
+#    album_name = models.CharField(max_length=50)
+#    album_category = models.ForeignKey('AlbumCategory', models.DO_NOTHING)
+#    album_event_datetime = models.DateTimeField(blank=True, null=True)
+#
+#    class Meta:
+#        managed = False
+#        db_table = 'album'
 
 
 class AlbumCategory(models.Model):
     album_category_id = models.AutoField(primary_key=True)
     album_category_name = models.CharField(max_length=50)
 
+    def __str__(self):
+        return self.album_category_name
+    
     class Meta:
         managed = False
         db_table = 'album_category'
-
-
-class AlbumPhotos(models.Model):
-    album_photos_id = models.AutoField(primary_key=True)
-    album = models.ForeignKey(Album, models.DO_NOTHING, related_name='photos')
-    photo_path = models.CharField(max_length=200)
-
-    class Meta:
-        managed = False
-        db_table = 'album_photos'
 
 
 class AuthGroup(models.Model):
@@ -162,50 +204,70 @@ class Employee(models.Model):
 
 class Event(models.Model):
     event_id = models.AutoField(primary_key=True)
-    event_name = models.CharField(max_length=45)
-    event_category = models.ForeignKey('EventCategory', models.DO_NOTHING)
-    event_start_datetime = models.DateTimeField()
-    event_end_datetime = models.DateTimeField()
-    event_description = models.CharField(max_length=1000, blank=True, null=True)
-    event_is_deleted = models.TextField()  # This field type is a guess.
-
+    event_name = models.CharField(max_length=45, verbose_name='活動名稱')
+    event_category = models.ForeignKey('EventCategory', models.DO_NOTHING, verbose_name='活動分類')
+    event_start_datetime = models.DateTimeField(verbose_name='活動開始時間')
+    event_end_datetime = models.DateTimeField(verbose_name='活動結束時間')
+    event_description = models.CharField(max_length=1000, blank=True, null=True, verbose_name='活動描述')
+#    event_is_deleted = models.TextField()  # This field type is a guess.
+    
+    def __str__(self):
+        return self.event_name    
+    
     class Meta:
         managed = False
         db_table = 'event'
+        verbose_name = '活動'
+        verbose_name_plural = '活動'
 
 
 class EventCategory(models.Model):
     event_category_id = models.AutoField(primary_key=True)
     event_category_name = models.CharField(max_length=50)
-
+    
+    def __str__(self):
+        return self.event_category_name
+    
     class Meta:
         managed = False
         db_table = 'event_category'
 
 
 class Member(models.Model):
-    member_id = models.CharField(primary_key=True, max_length=45)
-    member_name = models.CharField(max_length=20)
-    member_phone = models.CharField(max_length=20)
-    member_pid = models.CharField(max_length=11)
-    member_email = models.CharField(max_length=45, null=True)
-    member_introducer_reference = models.ForeignKey('MemberIntroducerReference', models.DO_NOTHING, blank=True, related_name='mem_introducer')
-    member_is_verified = models.TextField()  # This field type is a guess.
-    member_password = models.CharField(max_length=45, blank=True, null=True)
+    member_id = models.CharField(primary_key=True, max_length=45, verbose_name='會員代號')
+    member_name = models.CharField(max_length=20, verbose_name='姓名')
+    member_pid = models.CharField(max_length=11, verbose_name='身份證字號')
+    member_birthday = models.DateField(blank=True, null=True, verbose_name='生日')
+    member_phone_o = models.CharField(db_column='member_phone_O', max_length=20, blank=True, null=True, verbose_name='機構聯絡電話')  # Field name made lowercase.
+    member_phone_h = models.CharField(db_column='member_phone_H', max_length=20, blank=True, null=True, verbose_name='住家聯絡電話')  # Field name made lowercase.
+    member_mobile = models.CharField(max_length=20, blank=True, null=True, verbose_name='行動電話')
+    member_zip_code = models.IntegerField(blank=True, null=True, verbose_name='郵遞區號')
+    member_address = models.CharField(max_length=50, blank=True, null=True, verbose_name='住址')
+    member_joining_date = models.DateField(blank=True, null=True, verbose_name='加入日期')
+    member_email = models.CharField(max_length=45, blank=True, null=True, verbose_name='電子信箱')
+    member_password = models.CharField(max_length=20, blank=True, null=True, verbose_name='密碼')
+    member_introducer_name = models.CharField(max_length=20, blank=True, null=True, verbose_name='介紹人')
+    member_is_verified = models.BooleanField(verbose_name='已驗證')  # This field type is a guess.
 
     class Meta:
         managed = False
         db_table = 'member'
+        verbose_name = '會員'
+        verbose_name_plural = '會員'
+        
+    def _member_is_verified(self):
+        return bool(self.member_is_verified)
+    _member_is_verified.short_description = '已驗證'
 
 
-class MemberIntroducerReference(models.Model):
-    member_introducer_reference_id = models.IntegerField(primary_key=True)
-    member = models.ForeignKey(Member, models.DO_NOTHING, related_name='member')
-    introducer = models.ForeignKey(Member, models.DO_NOTHING, blank=True, null=True, related_name='introducer')
-
-    class Meta:
-        managed = False
-        db_table = 'member_introducer_reference'
+#class MemberIntroducerReference(models.Model):
+#    member_introducer_reference_id = models.IntegerField(primary_key=True)
+#    member = models.ForeignKey(Member, models.DO_NOTHING, related_name='member')
+#    introducer = models.ForeignKey(Member, models.DO_NOTHING, blank=True, null=True, related_name='introducer')
+#
+#    class Meta:
+#        managed = False
+#        db_table = 'member_introducer_reference'
 
 
 class Message(models.Model):
@@ -222,6 +284,70 @@ class Message(models.Model):
         managed = False
         db_table = 'message'
 
+class Oauth2ProviderAccesstoken(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    token = models.CharField(unique=True, max_length=255)
+    expires = models.DateTimeField()
+    scope = models.TextField()
+    application = models.ForeignKey('Oauth2ProviderApplication', models.DO_NOTHING, blank=True, null=True)
+    user = models.ForeignKey(AuthUser, models.DO_NOTHING, blank=True, null=True)
+    created = models.DateTimeField()
+    updated = models.DateTimeField()
+    source_refresh_token = models.ForeignKey('Oauth2ProviderRefreshtoken', models.DO_NOTHING, unique=True, blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'oauth2_provider_accesstoken'
+
+
+class Oauth2ProviderApplication(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    client_id = models.CharField(unique=True, max_length=100)
+    redirect_uris = models.TextField()
+    client_type = models.CharField(max_length=32)
+    authorization_grant_type = models.CharField(max_length=32)
+    client_secret = models.CharField(max_length=255)
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(AuthUser, models.DO_NOTHING, blank=True, null=True)
+    skip_authorization = models.IntegerField()
+    created = models.DateTimeField()
+    updated = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'oauth2_provider_application'
+
+
+class Oauth2ProviderGrant(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    code = models.CharField(unique=True, max_length=255)
+    expires = models.DateTimeField()
+    redirect_uri = models.CharField(max_length=255)
+    scope = models.TextField()
+    application = models.ForeignKey(Oauth2ProviderApplication, models.DO_NOTHING)
+    user = models.ForeignKey(AuthUser, models.DO_NOTHING)
+    created = models.DateTimeField()
+    updated = models.DateTimeField()
+
+    class Meta:
+        managed = False
+        db_table = 'oauth2_provider_grant'
+
+
+class Oauth2ProviderRefreshtoken(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    token = models.CharField(max_length=255)
+    access_token = models.ForeignKey(Oauth2ProviderAccesstoken, models.DO_NOTHING, unique=True, blank=True, null=True)
+    application = models.ForeignKey(Oauth2ProviderApplication, models.DO_NOTHING)
+    user = models.ForeignKey(AuthUser, models.DO_NOTHING)
+    created = models.DateTimeField()
+    updated = models.DateTimeField()
+    revoked = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        managed = False
+        db_table = 'oauth2_provider_refreshtoken'
+        unique_together = (('token', 'revoked'),)
 
 class Order(models.Model):
     order_id = models.CharField(primary_key=True, max_length=45)
@@ -279,9 +405,9 @@ class Post(models.Model):
     #post_content = RichTextField(max_length=10000, blank=True, null=True)
     post_content = RichTextUploadingField(max_length=10000, blank=True, null=True, verbose_name='文章內容')
     #post_created_datetime = models.DateTimeField()
-    post_last_modified_datetime = models.DateTimeField(verbose_name='最近更動時間')
+    post_last_modified_datetime = models.DateTimeField(verbose_name='最近修改日期')
     post_category = models.ForeignKey('PostCategory', models.DO_NOTHING, verbose_name='文章分類')
-    post_is_deleted = models.TextField()  # This field type is a guess.
+#    post_is_deleted = models.TextField()  # This field type is a guess.
     post_is_public = models.BooleanField(verbose_name='發佈文章')  # This field type is a guess.
     
     def _post_is_public(self):
@@ -294,26 +420,27 @@ class Post(models.Model):
     class Meta:
         managed = False
         db_table = 'post'
-
+        verbose_name = '文章'
+        verbose_name_plural = '文章'
 
 class PostAttachment(models.Model):
     post_attachment_id = models.AutoField(primary_key=True)
     post = models.ForeignKey(Post, models.DO_NOTHING, related_name='post_attachment')
     post_attachment_path_or_link = models.CharField(max_length=200)
-    post_attachment_type = models.ForeignKey('PostAttachmentType', models.DO_NOTHING, related_name='post_attachment_type')
+    #post_attachment_type = models.ForeignKey('PostAttachmentType', models.DO_NOTHING, related_name='post_attachment_type')
 
     class Meta:
         managed = False
         db_table = 'post_attachment'
 
 
-class PostAttachmentType(models.Model):
-    post_attachment_type_id = models.AutoField(primary_key=True)
-    post_attachment_type_name = models.CharField(max_length=50)
-
-    class Meta:
-        managed = False
-        db_table = 'post_attachment_type'
+#class PostAttachmentType(models.Model):
+#    post_attachment_type_id = models.AutoField(primary_key=True)
+#    post_attachment_type_name = models.CharField(max_length=50)
+#
+#    class Meta:
+#        managed = False
+#        db_table = 'post_attachment_type'
 
 
 class PostCategory(models.Model):
