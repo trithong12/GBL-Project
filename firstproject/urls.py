@@ -23,7 +23,7 @@ from django.conf import settings
 
 router = DefaultRouter()
 router.register(r'product', views.ProductViewSet)
-router.register(r'post', views.PostViewSet)
+#router.register(r'post', views.PostViewSet)
 router.register(r'event', views.EventViewSet)
 router.register(r'album', views.AlbumViewSet)
 router.register(r'order', views.OrderViewSet)
@@ -33,18 +33,21 @@ router.register(r'message', views.MessageViewSet)
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    url(r'post/(?P<post_id>\d+)/$', views.PostDetailView.as_view(), name = 'post_detail'),
+    url(r'post/(?P<slug>[-\w]+)/$', views.PostDetailView.as_view(), name = 'post_detail_slug'),
+    url(r'^posts/$', views.post_list),
+    url(r'^posts/(?P<pk>[0-9]+)$', views.post_detail),
+    
     # 帳號登入登出
     url(r'^login/$', views.login),
-    url(r'^logout/$', views.logout),
-     
+    url(r'^logout/$', views.logout),     
     # 首頁
     url(r'^$', views.index),
-    url(r'^index/$', views.index),
-    
+    url(r'^index/$', views.index),    
     # 商品
 #    url(r'^listProducts/$', views.listProducts),     
 #    url(r'^listProducts_ajax_url/$', views.listProducts_asJson, name='listProducts_ajax_url'),
     url(r'^api/gbl/', include(router.urls)),
     
-    path('ckeditor/', include('ckeditor_uploader.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -5,10 +5,13 @@
 #   * Make sure each ForeignKey has `on_delete` set to the desired behavior.
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
+#from django.conf import settings
 from django.db import models
-from model_utils import Choices
-
-from ckeditor.fields import RichTextField
+#from django.core.urlresolvers import reverse
+#from model_utils import Choices
+from django.utils.html import format_html
+#from django.utils.safestring import mark_safe
+#from ckeditor.fields import RichTextField
 from ckeditor_uploader.fields import RichTextUploadingField
 
 import uuid
@@ -414,22 +417,53 @@ class PaymentMethod(models.Model):
 class Post(models.Model):
     post_id = models.AutoField(primary_key=True)
     post_title = models.CharField(max_length=50, verbose_name='文章標題')
+    post_subtitle = models.CharField(max_length=30, blank=True, null=True, verbose_name='文章副標題', help_text='最大長度為30')
+    post_url = models.URLField(max_length=500, blank=True, null=True)
     post_author = models.CharField(max_length=45, verbose_name='文章作者')
     #post_content = models.CharField(max_length=10000, blank=True, null=True)
     #post_content = RichTextField(max_length=10000, blank=True, null=True)
     post_content = RichTextUploadingField(max_length=10000, blank=True, null=True, verbose_name='文章內容')
-    #post_created_datetime = models.DateTimeField()
+    post_news_link = models.URLField(blank=True, null=True, max_length=500, verbose_name='外部新聞連結')
+    post_created_datetime = models.DateTimeField(auto_now_add=True)
     post_last_modified_datetime = models.DateTimeField(verbose_name='最近修改日期')
     post_category = models.ForeignKey('PostCategory', models.DO_NOTHING, verbose_name='文章分類')
 #    post_is_deleted = models.TextField()  # This field type is a guess.
     post_is_public = models.BooleanField(verbose_name='發佈文章')  # This field type is a guess.
+    slug = models.SlugField(default='', blank=True)
+    post_is_top_show = models.BooleanField(verbose_name='為本分類之置頂文章')
     
+#    def get_absolute_url(self):
+#        return reverse('post_detail', kwargs={'post_id': self.post_id})
+
+    def _post_url(self):
+        return format_html(
+            '<a href="{0}" target="_blank">{1}</a>',
+            self.post_url,
+            self.post_url,
+        ) if self.post_url else '無連結'
+    _post_url.short_description = '文章連結'
+
     def _post_is_public(self):
         if bool(self.post_is_public):
             return '已發佈'
         else:
             return '未發佈'
     _post_is_public.short_description = '發佈文章'
+    
+    def _post_is_top_show(self):
+        if bool(self.post_is_top_show):
+            return '是'
+        else:
+            return '否'
+    _post_is_top_show.short_description = '為本分類之置頂文章'
+    
+    def _post_news_link(self):
+        return format_html(
+            '<a href="{0}" target="_blank">{1}</a>',
+            self.post_news_link,
+            self.post_news_link,
+        ) if self.post_news_link else '無連結'
+    _post_news_link.short_description = '外部新聞連結'
     
     class Meta:
         managed = False
@@ -440,7 +474,7 @@ class Post(models.Model):
 class PostAttachment(models.Model):
     post_attachment_id = models.AutoField(primary_key=True)
     post = models.ForeignKey(Post, models.DO_NOTHING, related_name='post_attachment')
-    post_attachment_path_or_link = models.CharField(max_length=200)
+    post_attachment_path_or_link = models.URLField(max_length=500)
     #post_attachment_type = models.ForeignKey('PostAttachmentType', models.DO_NOTHING, related_name='post_attachment_type')
 
     class Meta:
@@ -472,6 +506,7 @@ class PostCategory(models.Model):
 class Product(models.Model):
     product_id = models.CharField(primary_key=True, max_length=45, verbose_name='商品代號')
     product_name = models.CharField(max_length=50, verbose_name='名稱')
+    product_image = models.ImageField(upload_to='products', blank=True, null=True, verbose_name='商品圖片')
     product_category = models.ForeignKey('ProductCategory', models.DO_NOTHING, verbose_name='商品分類')
     product_price = models.IntegerField(blank=True, null=True, verbose_name='單價/價格')
     product_description = models.CharField(max_length=200, blank=True, null=True, verbose_name='描述')
@@ -482,6 +517,15 @@ class Product(models.Model):
     def __str__(self):
         return self.product_name
     
+    def _product_image(self):
+        if self.product_image:
+            product_image = self.product_image.url
+            return format_html('<a href="%s" target="_blank"><img src="%s" width="150" height="150" /></a>'
+                           % (product_image, product_image))
+        else:
+            return format_html('<img src="" alt="無商品圖片" width="150" height="150" />')
+    _product_image.short_description = '商品圖片'
+        
     class Meta:
         managed = False
         db_table = 'product'

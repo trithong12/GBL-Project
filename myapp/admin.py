@@ -1,12 +1,13 @@
 # -*-coding:utf-8 -*-
-
+#from django.conf import settings
 from django.contrib import admin
 from django import forms
 from myapp import models
 from datetime import datetime
-from django.utils.translation import gettext_lazy as _
+#from django.utils.translation import gettext_lazy as _
 from bs4 import BeautifulSoup as bs
-
+from django.utils.text import slugify
+#from django.core.exceptions import ValidationError
 # Register your models here.
 #admin.site.register(models.Post)
 
@@ -19,7 +20,7 @@ class PostForm(forms.ModelForm):
     post_is_public = forms.ChoiceField(choices=MY_CHOICES, label='發佈文章')
     class Meta:
         model = models.Post
-        fields = ['post_title', 'post_author', 'post_content', 'post_category', 'post_is_public']
+        fields = ['post_title', 'post_subtitle', 'post_author', 'post_content', 'post_news_link', 'post_category', 'post_is_top_show', 'post_is_public']
 
 class PostAdmin(admin.ModelAdmin):
     
@@ -30,17 +31,34 @@ class PostAdmin(admin.ModelAdmin):
     def make_unpublished(modeladmin, request, queryset):
         queryset.update(post_is_public=False)
     make_unpublished.short_description = "不發佈所選取之文章"
+    
+    def update_post_url(modeladmin, request, queryset):
+        for obj in queryset:
+            obj.slug = slugify(str(obj.post_id)+'-'+obj.post_title+'-'+(obj.post_subtitle if obj.post_subtitle else ''))
+            obj.post_url = post_url='http://'+request.META['HTTP_HOST']+'/post/'+obj.slug
+            obj.save()
+    update_post_url.short_description = '更新文章連結'
    
     form = PostForm
-    list_display = ('post_title', 'post_author', 'post_content', 'post_category', 'post_last_modified_datetime', '_post_is_public')
-    list_filter = ('post_title', 'post_author', 'post_last_modified_datetime', 'post_is_public')
+    list_display = ('post_title', 'post_subtitle', 'post_author', '_post_url', 'post_category', '_post_is_top_show', '_post_news_link', 'post_content',  'post_last_modified_datetime', '_post_is_public')
+    list_filter = ('post_category', 'post_title', 'post_author', 'post_last_modified_datetime', 'post_is_public')
     search_fields = ('post_title', 'post_author')
-    actions = [make_published, make_unpublished]
+    actions = [make_published, make_unpublished, update_post_url]
     list_per_page = 10
-    ordering = ('post_id',)
-    
+    ordering = ('-post_is_top_show', '-post_id',)
+        
     def save_model(self, request, obj, form, change):
+        if obj.post_is_top_show:
+            topShowObjects = models.Post.objects.filter(post_category=obj.post_category)
+            topShowObjects = topShowObjects.filter(post_is_top_show=True)
+            if topShowObjects != None:
+                for o in topShowObjects:
+                    o.post_is_top_show = False
+                    o.save()        
+        
         obj.post_last_modified_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        obj.slug = slugify(str(obj.post_id)+'-'+obj.post_title+'-'+(obj.post_subtitle if obj.post_subtitle else ''))
+        obj.post_url = 'http://'+request.META['HTTP_HOST']+'/post/'+obj.slug
         obj.save()
         
         post_id = obj.post_id
@@ -48,7 +66,8 @@ class PostAdmin(admin.ModelAdmin):
         soup = bs(post_content, 'html.parser')
         imgs = soup.find_all('img')
         hrefs = soup.find_all('a')
-        print(imgs, '\n', hrefs)
+        audios = soup.find_all('audio')
+        iframes = soup.find_all('iframe')
         for img in imgs:
             attachment = models.PostAttachment()
             attachment.post = obj
@@ -58,6 +77,16 @@ class PostAdmin(admin.ModelAdmin):
             attachment = models.PostAttachment()
             attachment.post = obj
             attachment.post_attachment_path_or_link = href['href']
+            attachment.save()
+        for audio in audios:
+            attachment = models.PostAttachment()
+            attachment.post = obj
+            attachment.post_attachment_path_or_link = firstproject.settings.MEDIA_ROOT+audio['src']
+            attachment.save()
+        for iframe in iframes:
+            attachment = models.PostAttachment()
+            attachment.post = obj
+            attachment.post_attachment_path_or_link = iframe['src']
             attachment.save()
        
 # end文章管理 =========================================================================
@@ -171,6 +200,8 @@ class ProductForm(forms.ModelForm):
 class ProductModelAdmin(admin.ModelAdmin):   
     form = ProductForm
     fs = [f.name for f in models.Product._meta.fields]
+    fs = fs[:2] + ['_product_image'] + fs[2:]
+    fs.remove('product_image')
     list_display = fs
     list_filter = ('product_category', 'product_price', 'product_name', 'product_created_datetime', 'product_modified_datetime')
     search_fields = ('product_id', 'product_category', 'product_price', 'product_name', 'product_description')
@@ -206,6 +237,7 @@ class OrderModelAdmin(admin.ModelAdmin):
     ordering = ('order_id',)
     
     def response_add(self, request, new_object):
+        print('response_add called')
         obj = self.after_saving_model_and_related_inlines(new_object)
         return super(OrderModelAdmin, self).response_add(request, obj)
 
@@ -214,11 +246,11 @@ class OrderModelAdmin(admin.ModelAdmin):
         return super(OrderModelAdmin, self).response_change(request, obj)
 
     def after_saving_model_and_related_inlines(self, obj):
-        print(obj.order_cart.all().count())
         total = 0
         for item in obj.order_cart.all():
             total += item.product.product_price * item.amount
         obj.order_cost_balance = total
+        print(obj.order_cost_balance)
         obj.save()
         return obj
     
@@ -229,6 +261,7 @@ class OrderModelAdmin(admin.ModelAdmin):
         if obj.order_is_cancelled and obj.order_process.order_process_id != 5:
             obj.order_cancelled_datetime = None
             obj.order_is_cancelled = False
+        obj.order_cost_balance = 0
         obj.save()
     
 # end訂單管理 ========================================================================

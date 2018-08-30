@@ -3,12 +3,14 @@ from django.shortcuts import render
 # Create your views here.
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
+from django.views.generic.detail import DetailView
 from myapp import models
 from django.conf import settings
 from django.contrib import auth
 from django.core import serializers
 from rest_framework import viewsets, status, generics, permissions, serializers
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from myapp.serializers import *
 #from myapp.models import query_products_by_args
 
@@ -58,6 +60,48 @@ def index(request):
 #    print('data:', data)
 #    return HttpResponse(json, content_type='application/json')
 
+@api_view(['GET', 'POST'])
+def post_list(request):
+    """
+    List all code snippets, or create a new snippet.
+    """
+    if request.method == 'GET':
+        posts = models.Post.objects.all()
+        serializer = PostSerializer(posts, many=True)
+        return Response(serializer.data)
+
+    elif request.method == 'POST':
+        post = PostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def post_detail(request, pk):
+    """
+    Retrieve, update or delete a code snippet.
+    """
+    try:
+        post = models.Post.objects.get(pk=pk)
+    except Post.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = PostSerializer(post)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        serializer = PostSerializer(post, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        post.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Post.objects.all()
@@ -105,3 +149,18 @@ class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Message.objects.all()
     serializer_class = MessageSerializer
+    
+class PostDetailView(DetailView):
+    model = models.Post
+    template_name = "post/post_detail.html"
+    pk_url_kwarg = "post_id"
+    slug_url_kwarg = 'slug'
+    query_pk_and_slug = True
+    
+def post_detail_view(request, primary_key):
+    try:
+        post = Post.objects.get(pk=primary_key)
+        print(post.post_title)
+    except Post.DoesNotExist:
+        raise Http404('文章不存在')
+    return render(request, 'post/post_detail.html', context={'post': post})

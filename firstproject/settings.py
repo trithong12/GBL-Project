@@ -11,6 +11,15 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
+
+#import socket
+#
+#try:
+#    HOSTNAME = socket.gethostbyaddr()
+#    print('HOSTNAME:', HOSTNAME)
+#except:
+#    HOSTNAME = 'localhost'
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -24,8 +33,7 @@ SECRET_KEY = '0or#r1^mb+0q#r1c+1f02szy5a3$jeg+wcccftdm$a@0nx30(b'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['54a71065.ngrok.io', 'localhost']
 
 # Application definition
 
@@ -44,9 +52,47 @@ INSTALLED_APPS = [
     'material.admin',
     'imagekit',
     'oauth2_provider',
+#    'admin_reorder',
 ]
 
-CKEDITOR_UPLOAD_PATH = 'uploads/'
+CKEDITOR_UPLOAD_PATH = 'posts/'
+
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Styles', 'Format', 'Bold', 'Italic', 'Underline', 'Strike', 'SpellChecker', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink', 'Anchor'],
+            ['Image', 'Html5audio', 'Flash', 'Table', 'HorizontalRule',],
+            ['TextColor', 'BGColor',],
+            ['Smiley', 'SpecialChar',], ['Source',],
+        ],
+        'height': 300,
+        'width': '100%',
+        'removePlugins': 'stylesheetparser',
+        'extraPlugins': ','.join(
+            [
+               'html5audio',
+            ]
+        ),
+        'extraAllowedContent': 'iframe[*]',
+    },
+}
+    
+#CKEDITOR_CONFIGS = {
+#    'default': {
+#        'toolbar': 'Custom',
+#        'height': 500,
+#        'toolbar_Custom': [
+#            ['Styles', 'Format', 'Bold', 'Italic', 'Underline', 'Strike', 'SpellChecker',],
+#            ['Link', 'Unlink', 'Anchor'],
+#            ['Image', 'Youtube', 'Flash', 'Table', 'HorizontalRule',],
+#            ['TextColor', 'BGColor',],
+#            ['Smiley', 'SpecialChar',], ['Source',],
+#        ],
+#        'extraPlugins': ','.join(['youtube',]),
+#    }
+#}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -56,6 +102,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+#    'admin_reorder.middleware.ModelAdminReorder',
 ]
 
 ROOT_URLCONF = 'firstproject.urls'
@@ -158,3 +205,8 @@ OAUTH2_PROVIDER = {
     # this is the list of available scopes
     'SCOPES': {'read': 'Read scope', 'write': 'Write scope', 'groups': 'Access to your groups'}
 }
+
+#ADMIN_REORDER = (
+#    'site',
+#    {'app': 'myapp', 'models': ('Post', 'Album', 'AlbumImage', 'Product', 'Event', 'Member', 'Order')},
+#)

@@ -15,7 +15,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Post
 #        fields = '__all__'
-        fields = ('post_title', 'post_last_modified_datetime', 'post_category', 'post_attachment')
+        fields = ('post_id', 'post_title', 'post_last_modified_datetime', 'post_category', 'post_attachment')
 
 class EventSerializer(serializers.ModelSerializer):
     event_category = serializers.CharField(source='event_category.event_category_name')
