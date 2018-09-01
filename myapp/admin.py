@@ -58,10 +58,11 @@ class PostAdmin(admin.ModelAdmin):
         
         obj.post_last_modified_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         obj.slug = slugify(str(obj.post_id)+'-'+obj.post_title+'-'+(obj.post_subtitle if obj.post_subtitle else ''))
-        obj.post_url = 'http://'+request.META['HTTP_HOST']+'/post/'+obj.slug
+        obj.post_url = 'http://'+request.META['HTTP_HOST']+'/retrieve_post/'+obj.slug
         obj.save()
         
         post_id = obj.post_id
+        old_attachments = models.PostAttachment.objects.filter(post_id=post_id).delete()
         post_content = obj.post_content
         soup = bs(post_content, 'html.parser')
         imgs = soup.find_all('img')
@@ -81,7 +82,7 @@ class PostAdmin(admin.ModelAdmin):
         for audio in audios:
             attachment = models.PostAttachment()
             attachment.post = obj
-            attachment.post_attachment_path_or_link = firstproject.settings.MEDIA_ROOT+audio['src']
+            attachment.post_attachment_path_or_link = audio['src']
             attachment.save()
         for iframe in iframes:
             attachment = models.PostAttachment()

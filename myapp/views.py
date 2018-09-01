@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.views.generic.detail import DetailView
+from rest_framework.decorators import action
 from myapp import models
 from django.conf import settings
 from django.contrib import auth
@@ -12,6 +13,7 @@ from rest_framework import viewsets, status, generics, permissions, serializers
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from myapp.serializers import *
+from datetime import datetime
 #from myapp.models import query_products_by_args
 
 from django.contrib import admin
@@ -60,47 +62,47 @@ def index(request):
 #    print('data:', data)
 #    return HttpResponse(json, content_type='application/json')
 
-@api_view(['GET', 'POST'])
-def post_list(request):
-    """
-    List all code snippets, or create a new snippet.
-    """
-    if request.method == 'GET':
-        posts = models.Post.objects.all()
-        serializer = PostSerializer(posts, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        post = PostSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET', 'PUT', 'DELETE'])
-def post_detail(request, pk):
-    """
-    Retrieve, update or delete a code snippet.
-    """
-    try:
-        post = models.Post.objects.get(pk=pk)
-    except Post.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
-
-    if request.method == 'GET':
-        serializer = PostSerializer(post)
-        return Response(serializer.data)
-
-    elif request.method == 'PUT':
-        serializer = PostSerializer(post, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    elif request.method == 'DELETE':
-        post.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+#@api_view(['GET', 'POST'])
+#def post_list(request):
+#    """
+#    List all code snippets, or create a new snippet.
+#    """
+#    if request.method == 'GET':
+#        posts = models.Post.objects.all()
+#        serializer = PostSerializer(posts, many=True)
+#        return Response(serializer.data)
+#
+#    elif request.method == 'POST':
+#        post = PostSerializer(data=request.data)
+#        if serializer.is_valid():
+#            serializer.save()
+#            return Response(serializer.data, status=status.HTTP_201_CREATED)
+#        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+#@api_view(['GET', 'PUT', 'DELETE'])
+#def post_detail(request, pk):
+#    """
+#    Retrieve, update or delete a code snippet.
+#    """
+#    try:
+#        post = models.Post.objects.get(pk=pk)
+#    except Post.DoesNotExist:
+#        return Response(status=status.HTTP_404_NOT_FOUND)
+#
+#    if request.method == 'GET':
+#        serializer = PostSerializer(post)
+#        return Response(serializer.data)
+#
+#    elif request.method == 'PUT':
+#        serializer = PostSerializer(post, data=request.data)
+#        if serializer.is_valid():
+#            serializer.save()
+#            return Response(serializer.data)
+#        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+#
+#    elif request.method == 'DELETE':
+#        post.delete()
+#        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class PostViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
@@ -144,11 +146,66 @@ class MemberViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Member.objects.all()
     serializer_class = MemberSerializer
+    
+    def create(self, request):
+        # 如果只接到身份證字號-->回傳會員資料
+        if len(request.data) == 1 and list(request.data.keys())[0] == 'member_pid':
+            member = models.Member.objects.get(member_pid=request.data['member_pid'])
+            serializer = MemberSerializer(member)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        # 否則為新增會員
+        else:
+            # 如果會員email不為空則先檢查會員是否已存在，若已存在則回傳錯誤訊息，否則新增會員
+            if request.data['member_email'] != None and request.data['member_email'] != '': 
+                try:
+                    member = models.Member.objects.get(member_email=request.data['member_email'])
+                    return Response({'message':'Member has already existed!'}, status=status.HTTP_400_BAD_REQUEST)
+                except:
+                    serializer = MemberSerializer(data=request.data)
+                    if serializer.is_valid():
+                        serializer.save()
+                        return Response(status=status.HTTP_200_OK)
+                    else:
+                        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # 如果會員email為空則回傳錯誤訊息
+            else:
+                return Response({'message':'Email cannot be empty!'}, status=status.HTTP_400_BAD_REQUEST)
 
 class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
     queryset = models.Message.objects.all()
     serializer_class = MessageSerializer
+    
+class LoginViewSet(viewsets.ModelViewSet):
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
+    queryset = models.LoginForm.objects.all()
+    serializer_class = LoginSerializer
+    
+    def create(self, request):
+        user = request.data
+        try:
+            member = models.Member.objects.get(
+                    member_email=user['email'],
+                    member_password=user['password']
+                    )
+            print(member)
+            serializer = MemberSerializer(member)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+#    
+#    def create(self, validated_data):
+#        try:
+#            print('email:', validated_data['email'])
+#            print('password:', validated_data['password'])
+#            member = models.Member.objects.get(
+#                    member_email=validated_data['email'],
+#                    member_password=validated_data['password']
+#                    )
+#            print(member)
+#            return member
+#        except e:
+#            return e   
     
 class PostDetailView(DetailView):
     model = models.Post

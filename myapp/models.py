@@ -473,7 +473,7 @@ class Post(models.Model):
 
 class PostAttachment(models.Model):
     post_attachment_id = models.AutoField(primary_key=True)
-    post = models.ForeignKey(Post, models.DO_NOTHING, related_name='post_attachment')
+    post = models.ForeignKey(Post, models.CASCADE, related_name='post_attachment')
     post_attachment_path_or_link = models.URLField(max_length=500)
     #post_attachment_type = models.ForeignKey('PostAttachmentType', models.DO_NOTHING, related_name='post_attachment_type')
 
@@ -555,3 +555,7 @@ class ReceiveMethod(models.Model):
     class Meta:
         managed = False
         db_table = 'receive_method'
+        
+class LoginForm(models.Model):
+    email = models.CharField(max_length=100)
+    password = models.CharField(max_length=100)
