@@ -114,13 +114,20 @@ class AlbumForm(forms.ModelForm):
 
     zip = forms.FileField(required=False, label='相簿照片集(.zip檔)')
 
+class AlbumImageInline(admin.TabularInline):
+    model = models.AlbumImage
+    fields = ('image', 'thumbnail')
+    readonly_fields = ('thumbnail',)
+    
 class AlbumModelAdmin(admin.ModelAdmin):  
     form = AlbumForm
+    inlines = [AlbumImageInline]
     prepopulated_fields = {'slug': ('title',)}
-    list_display = ('title', 'album_category', 'thumb', 'modified',)
-    list_filter = ('album_category', 'modified', 'thumb', 'title',)
-    search_fields = ('album_category', 'title', 'thumb', 'modified',)
+    list_display = ('title', 'album_category', 'thumbnail', 'modified',)
+    list_filter = ('album_category', 'modified', 'title',)
+    search_fields = ('album_category', 'title', 'modified',)
     list_per_page = 10
+    ordering = ('-album_id',)
 
     def save_model(self, request, obj, form, change):
         if form.is_valid():
@@ -150,17 +157,18 @@ class AlbumModelAdmin(admin.ModelAdmin):
                     with Image.open(filepath) as i:
                         img.width, img.height = i.size
 
-                    img.thumb.save('thumb-{0}'.format(filename), contentfile)
+#                    img.thumb.save('thumb-{0}'.format(filename), contentfile)
                     img.save()
                 zip.close() 
             super(AlbumModelAdmin, self).save_model(request, obj, form, change)
 
 # In case image should be removed from album.
 class AlbumImageModelAdmin(admin.ModelAdmin):
-    list_display = ('alt', 'album', 'created',)
+    list_display = ('thumbnail', 'alt', 'album', 'created',)
     list_filter = ('album', 'created', 'alt')
     search_fields = ('alt', 'album', 'created',)
     list_per_page = 10
+    ordering = ('-image_id',)
     
 # end相簿管理 =========================================================================
 
@@ -172,7 +180,7 @@ class MemberModelAdmin(admin.ModelAdmin):
     list_display = fs
     list_filter = ('member_joining_date', 'member_zip_code',)
     search_fields = ('member_id', 'member_name', 'member_pid', 'member_birthday', 'member_email')
-    ordering = ('member_id',)
+    ordering = ('-member_id',)
     list_per_page = 10
     
 # end會員管理 ========================================================================
@@ -187,7 +195,7 @@ class EventModelAdmin(admin.ModelAdmin):
     list_filter = ('event_start_datetime', 'event_end_datetime', 'event_category', 'event_name',)
     search_fields = ('event_name', 'event_category', 'event_start_datetime', 'event_end_datetime')
     list_per_page = 10
-    ordering = ('event_id',)
+    ordering = ('-event_id',)
     
 # end活動管理 ========================================================================
 
@@ -207,7 +215,7 @@ class ProductModelAdmin(admin.ModelAdmin):
     list_filter = ('product_category', 'product_price', 'product_name', 'product_created_datetime', 'product_modified_datetime')
     search_fields = ('product_id', 'product_category', 'product_price', 'product_name', 'product_description')
     list_per_page = 10
-    ordering = ('product_id',)
+    ordering = ('-product_id',)
     
     def save_model(self, request, obj, form, change):
         if form.is_valid():
@@ -235,7 +243,7 @@ class OrderModelAdmin(admin.ModelAdmin):
     list_filter = ('order_payment_method', 'order_payment_is_completed', 'order_receive_method', 'order_process', 'order_modified_datetime',)
     search_fields = ('order_id', 'member', 'order_delivery_address',)
     list_per_page = 10
-    ordering = ('order_id',)
+    ordering = ('-order_id',)
     
     def response_add(self, request, new_object):
         print('response_add called')
@@ -276,3 +284,4 @@ admin.site.register(models.Product, ProductModelAdmin)
 admin.site.register(models.Order, OrderModelAdmin)
 admin.site.site_header = '佳倍利後台管理'
 admin.site.index_title = '後台管理' 
+admin.site.site_url = None

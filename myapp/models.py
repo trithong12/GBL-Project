@@ -13,6 +13,7 @@ from django.utils.html import format_html
 #from django.utils.safestring import mark_safe
 #from ckeditor.fields import RichTextField
 from ckeditor_uploader.fields import RichTextUploadingField
+from django.utils.safestring import mark_safe 
 
 import uuid
 from imagekit.models import ProcessedImageField
@@ -24,7 +25,7 @@ class Album(models.Model):
     album_category = models.ForeignKey('AlbumCategory', models.DO_NOTHING, verbose_name='相簿分類')
     album_event_datetime = models.DateTimeField(blank=True, null=True, verbose_name='活動日期')
     description = models.TextField(max_length=1024, blank=True, null=True, verbose_name='相簿描述')
-    thumb = ProcessedImageField(upload_to='albums', processors=[ResizeToFit(300)], format='JPEG', options={'quality': 90}, blank=True, null=True, verbose_name='縮略圖')
+    thumb = ProcessedImageField(upload_to='albums', processors=[ResizeToFit(100)], format='JPEG', options={'quality': 90}, verbose_name='縮略圖')
     tags = models.CharField(max_length=250, blank=True, null=True, verbose_name='標籤')
     is_visible = models.BooleanField(default=True, verbose_name='可檢視')
     created = models.DateTimeField(auto_now_add=True, verbose_name='建立日期')
@@ -34,6 +35,15 @@ class Album(models.Model):
     #def get_absolute_url(self):
     #    return reverse('album', kwargs={'slug':self.slug})
 
+    def thumbnail(self):
+        return mark_safe('<a href="{url}" target="_blank"><img src="{url}" width="{width}" height={height} /></a>'.format(
+            url = self.thumb.url,
+            width=100,
+            height=100,
+            )
+    )
+    thumbnail.short_description = '縮略圖'
+    
     class Meta:
         managed = False
         db_table = 'album'
@@ -45,8 +55,8 @@ class Album(models.Model):
 
 class AlbumImage(models.Model):
     image_id = models.AutoField(primary_key=True)
-    image = ProcessedImageField(upload_to='albums', processors=[ResizeToFit(1280)], format='JPEG', options={'quality': 70}, verbose_name='照片檔案')
-    thumb = ProcessedImageField(upload_to='albums', processors=[ResizeToFit(300)], format='JPEG', options={'quality': 80}, verbose_name='縮略圖')
+    image = ProcessedImageField(upload_to='albums', format='JPEG', options={'quality': 100}, verbose_name='照片檔案')
+#    thumb = ProcessedImageField(upload_to='albums', processors=[ResizeToFit(100)], format='JPEG', options={'quality': 80}, verbose_name='縮略圖')
     album = models.ForeignKey('album', related_name='images', on_delete=models.PROTECT, verbose_name='所屬相簿')
     alt = models.CharField(max_length=255, default=uuid.uuid4, verbose_name='圖片名稱/描述')
     created = models.DateTimeField(auto_now_add=True, verbose_name='建立日期')
@@ -55,7 +65,16 @@ class AlbumImage(models.Model):
     slug = models.SlugField(max_length=70, default=uuid.uuid4, editable=False)
     
     def __str__(self):
-        return self.album + '--' + self.alt
+        return str(self.album.album_id) + '--' + self.alt
+    
+    def thumbnail(self):
+        return mark_safe('<img src="{url}" width="{width}" height={height} />'.format(
+            url = self.image.url,
+            width=100,
+            height=100,
+            )
+    )
+    thumbnail.short_description = '縮略圖'
     
     class Meta:
         managed = False
@@ -238,8 +257,8 @@ class EventCategory(models.Model):
 
 class Member(models.Model):
     member_id = models.CharField(primary_key=True, max_length=45, verbose_name='會員代號')
-    member_name = models.CharField(max_length=20, verbose_name='姓名')
-    member_pid = models.CharField(max_length=11, verbose_name='身份證字號')
+    member_name = models.CharField(max_length=20, blank=True, null=True, verbose_name='姓名')
+    member_pid = models.CharField(max_length=11, blank=True, null=True, verbose_name='身份證字號')
     member_birthday = models.DateField(blank=True, null=True, verbose_name='生日')
     member_phone_o = models.CharField(db_column='member_phone_O', max_length=20, blank=True, null=True, verbose_name='機構聯絡電話')  # Field name made lowercase.
     member_phone_h = models.CharField(db_column='member_phone_H', max_length=20, blank=True, null=True, verbose_name='住家聯絡電話')  # Field name made lowercase.
@@ -251,6 +270,7 @@ class Member(models.Model):
     member_password = models.CharField(max_length=20, blank=True, null=True, verbose_name='密碼')
     member_introducer_name = models.CharField(max_length=20, blank=True, null=True, verbose_name='介紹人')
     member_is_verified = models.BooleanField(verbose_name='已驗證')  # This field type is a guess.
+    member_avatar = models.FileField(upload_to='members/', max_length=500, blank=True, null=True, verbose_name='大頭像')
 
     def __str__(self):
         return self.member_name

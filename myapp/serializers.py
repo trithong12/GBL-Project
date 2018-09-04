@@ -136,6 +136,24 @@ class MemberSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Member
         fields = '__all__'
+        
+    def update(self, instance, validated_data):
+        instance.member_name = validated_data.get('member_name', instance.member_name)
+        instance.member_pid = validated_data.get('member_pid', instance.member_pid)
+        instance.member_birthday = validated_data.get('member_birthday', instance.member_birthday)
+        instance.member_phone_o = validated_data.get('member_phone_o', instance.member_phone_o)
+        instance.member_phone_h = validated_data.get('member_phone_h', instance.member_phone_h)
+        instance.member_mobile = validated_data.get('member_mobile', instance.member_mobile)
+        instance.member_zip_code = validated_data.get('member_zip_code', instance.member_zip_code)
+        instance.member_address = validated_data.get('member_address', instance.member_address)
+        instance.member_joining_date = validated_data.get('member_joining_date', instance.member_joining_date)
+        instance.member_email = validated_data.get('member_email', instance.member_email)
+        instance.member_password = validated_data.get('member_password', instance.member_password)
+        instance.member_introducer_name = validated_data.get('member_introducer_name', instance.member_introducer_name)
+        instance.member_is_verified = validated_data.get('member_is_verified', instance.member_is_verified)
+        instance.member_avatar = validated_data.get('member_avatar', instance.member_avatar)
+        instance.save()
+        return instance
 
 class MessageSerializer(serializers.ModelSerializer):
     class Meta:

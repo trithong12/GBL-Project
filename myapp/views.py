@@ -161,6 +161,7 @@ class MemberViewSet(viewsets.ModelViewSet):
                     member = models.Member.objects.get(member_email=request.data['member_email'])
                     return Response({'message':'Member has already existed!'}, status=status.HTTP_400_BAD_REQUEST)
                 except:
+                    request.data['member_joining_date'] = datetime.now()
                     serializer = MemberSerializer(data=request.data)
                     if serializer.is_valid():
                         serializer.save()
